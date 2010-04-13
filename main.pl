@@ -2,9 +2,17 @@
 
 use Elevator;
 use Interface;
+use Tk;
 
-$e = Elevator->new();
-print "Finish floor: ".$e->get_finish_floor()."\n";
-print "Calling from 6th floor\n";
-die "Can't call an elevator\n" if (!$e->set_finish(6));
-print "Finish floor: ".$e->get_finish_floor()."\n";
+$el = Elevator->new();
+
+#map {print "$_\n"} keys (%{$el->get_state()});
+
+$face = Interface->new(Elevator::TOP_FLOOR);
+
+$el->set_state({'passenger' => Elevator::PS_OUT, 'doors' => Elevator::DR_OPEN});
+
+$face->draw_floors();
+$face->draw_elevator($el->get_state());
+$face->tick();
+Interface::MainLoop();

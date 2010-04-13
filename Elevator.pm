@@ -5,10 +5,10 @@ use strict;
 
 use constant TOP_FLOOR => 9;
 
-use constant EL_FREE   => 1;
-use constant EL_BUSY   => 2;
-use constant DR_OPEN   => 3;
-use constant DR_CLOSED => 4;
+use constant PS_YES    => 1;
+use constant PS_NO   => 0;
+use constant DR_CLOSED => 1;
+use constant DR_OPEN   => 0;
 
 sub new
 {
@@ -17,7 +17,26 @@ sub new
    bless($self, $class);
    $self->{current_floor} = 1;
    $self->{finish_floor} = 0;
+   $self->{state} = {'passenger' => PS_NO, 'doors' => DR_CLOSED};
    return $self;
+}
+
+sub get_state
+{
+    my $self = shift;
+    return $self->{state};
+}
+
+sub set_state
+{
+    my ($self, $st) = @_;
+    if (ref($st) eq 'HASH')
+    { 
+        $self->{state} = $st;
+        return 1;
+    }    
+    else
+        { return 0; }
 }
 
 sub get_current_floor
