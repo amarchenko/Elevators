@@ -5,6 +5,7 @@ use strict;
 
 use Tk;
 use Carp;
+use Elevator;
 
 our $WIDTH = 300;
 our $HEIGHT = 600;
@@ -26,7 +27,15 @@ sub new
     my $class = shift;
     my $self = {};
     bless ($self, $class);
-    $self->{top_floor} = shift;
+    $self->{elevator} = shift;
+    
+    my $cur_floor = ${$self->{elevator}}->get_current_floor();
+    $self->{el_coords} = [int(($WIDTH/2))-(int($E_WIDTH/2)), 
+                          ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
+                          int(($WIDTH/2))+(int($E_WIDTH/2)),
+                          ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT];
+    print $self->{el_coords};
+    
     #if ()
     $self->{main_window} = MainWindow->new('-title' => 'Elevators');
     $self->{canvas} = $self->{main_window}->Canvas('-width' => $WIDTH,
@@ -41,11 +50,11 @@ sub draw_floors
 {
     my $self = shift;
     
-    for (my $i = 1; $i <= $self->{top_floor}; $i++)
+    for (my $i = 1; $i <= Elevator::TOP_FLOOR; $i++)
     {
         $self->{canvas}->createText($T_INDENT, $i*$F_HEIGHT, 
                                     '-fill' => '#000000', 
-                                    '-text' => ($self->{top_floor}+1)-$i, 
+                                    '-text' => (Elevator::TOP_FLOOR+1)-$i, 
                                     '-anchor' => 'sw');
         $self->{canvas}->createLine($F_INDENT, $i*$F_HEIGHT, $WIDTH, $i*$F_HEIGHT, 
                                     '-fill' => 'white',
@@ -60,6 +69,7 @@ sub draw_elevator
         { croak "Wrong number argument of for ". __PACKAGE__ ."\n"; }
     my ($self, $st) = @_;
     my $color;
+    
     if ($st->{doors})
     {
         $color = '#FF0000';
@@ -68,29 +78,32 @@ sub draw_elevator
     {
         $color = '#FFD700';
     }
-    $self->{canvas}->createRectangle(int(($WIDTH/2))-(int($E_WIDTH/2)), 
-                                        ($HEIGHT-$E_HEIGHT), 
-                                        int(($WIDTH/2))+(int($E_WIDTH/2)),
-                                        $HEIGHT, 
+    $self->{canvas}->createRectangle($self->{el_coords}[0], 
+                                        $self->{el_coords}[1], 
+                                        $self->{el_coords}[2],
+                                        $self->{el_coords}[3], 
                                         '-fill' => $color,
                                         '-outline' => '#0000FF',
                                         '-tags' => 'elevator');
+    $self->draw_floors();
 }
 
 sub move_elevator
 {
     my $self = shift;
-    $self->{canvas}->move('elevator', 0, -10);    
+    if($self->{el_coords}[3] > ((Elevator::TOP_FLOOR+1)-7)*$F_HEIGHT)
+    {
+        $self->{canvas}->move('elevator', 0, -10);
+        $self->{el_coords}[1] -= 10;
+        $self->{el_coords}[3] -= 10;
+    }
 }
 
 sub tick
 {
     my $self = shift;
     $self->move_elevator();
-    #my $r = \&$self->tick;
-    #print $r."\n";
     $self->{main_window}->after($interval, sub{$self->tick()});
-    #sleep 1;
 }
 
 
