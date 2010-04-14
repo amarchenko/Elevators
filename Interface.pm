@@ -14,7 +14,7 @@ our $E_HEIGHT = 30;
 
 our $F_HEIGHT = $E_HEIGHT+10;
 
-our $F_INDENT = 20;
+our $F_INDENT = 90;
 our $T_INDENT = 10;
 
 our $interval = 400;
@@ -30,12 +30,22 @@ sub new
     $self->{elevator} = shift;
     
     my $cur_floor = ${$self->{elevator}}->get_current_floor();
+    
+=comment
+draws elevator at the center of the canvas
+
     $self->{el_coords} = [int(($WIDTH/2))-(int($E_WIDTH/2)), 
                           ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
                           int(($WIDTH/2))+(int($E_WIDTH/2)),
                           ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT];
-    print $self->{el_coords};
-    
+=cut
+
+    $self->{el_coords} = [int($WIDTH/2), 
+                      ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
+                      int($WIDTH/2)+$E_WIDTH,
+                      ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT];
+                      
+
     #if ()
     $self->{main_window} = MainWindow->new('-title' => 'Elevators');
     $self->{canvas} = $self->{main_window}->Canvas('-width' => $WIDTH,
@@ -52,15 +62,18 @@ sub draw_floors
     
     for (my $i = 1; $i <= Elevator::TOP_FLOOR; $i++)
     {
-        $self->{canvas}->createText($T_INDENT, $i*$F_HEIGHT, 
-                                    '-fill' => '#000000', 
-                                    '-text' => (Elevator::TOP_FLOOR+1)-$i, 
+        $self->{canvas}->createText($T_INDENT, $i*$F_HEIGHT,
+                                    '-fill' => '#000000',
+                                    '-text' => (Elevator::TOP_FLOOR+1)-$i,
                                     '-anchor' => 'sw');
-        $self->{canvas}->createLine($F_INDENT, $i*$F_HEIGHT, $WIDTH, $i*$F_HEIGHT, 
+        $self->{canvas}->createLine($F_INDENT, $i*$F_HEIGHT, $WIDTH, $i*$F_HEIGHT,
                                     '-fill' => 'white',
                                     '-tags' => 'floor');
+                                    
     }
-    
+    $self->{canvas}->Button('-text' => 'Call here', '-command' => sub{})->place('-relx' => 0.17, '-rely' => 0.048, '-anchor' => 'center');
+    $self->{canvas}->Button('-text' => 'Call here', '-command' => sub{})->place('-relx' => 0.17, '-rely' => 0.048+0.065, '-anchor' => 'center');
+    $self->{main_window}->Entry('-textvariable' => 'Enter floor number')->pack();
 }
 
 sub draw_elevator
