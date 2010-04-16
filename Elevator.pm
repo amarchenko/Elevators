@@ -16,7 +16,7 @@ sub new
    my $self = {};
    bless($self, $class);
    $self->{current_floor} = 1;
-   $self->{finish_floor} = 0;
+   $self->{finish_floor} = 1;
    $self->{state} = {'passenger' => PS_NO, 'doors' => DR_CLOSED};
    return $self;
 }
@@ -51,7 +51,17 @@ sub get_finish_floor
     return $self->{finish_floor};
 }
 
-sub set_finish
+sub set_current_floor
+{
+    my ($self, $f) = @_;
+    $self->{current_floor} = $f if ($f > 0 && $f <= TOP_FLOOR);
+    if ($self->{current_floor} == $f)
+        { return 1; }
+    else
+        { return 0; }
+}
+
+sub set_finish_floor
 {
     my ($self, $f) = @_;
     $self->{finish_floor} = $f if ($f > 0 && $f <= TOP_FLOOR);
