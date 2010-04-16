@@ -85,7 +85,7 @@ sub draw_floors
                                                                 '-anchor' => 'center');
         $btn_rely += 0.066;
     }
-    #print $self->{buttons}[1]->cget('-text');
+    print $self->{buttons}[1]->cget('-text');
     #$b = 
     #foreach (@{$b->configure()})
     #    {print $_->[0]."\n";}
