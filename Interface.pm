@@ -173,7 +173,8 @@ sub move_elevator
             { 
                 ${$self->{elevator}}->set_state({'general' => Elevator::ST_FREE, 'doors' => Elevator::DR_CLOSED});
                 $self->{buttons}[${$self->{elevator}}->get_current_floor()]->configure('-state' => 'normal');
-                my $dialog = $self->{main_window}->Toplevel('-height' => 200, '-width' => 200);
+                
+                #my $dialog = $self->{main_window}->Toplevel('-height' => 200, '-width' => 200);
                 
                 #$dialog->resizable( 0, 0 );
                 #$dialog->transient($dialog->Parent->toplevel);
