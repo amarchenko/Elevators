@@ -5,8 +5,8 @@ use strict;
 
 use constant TOP_FLOOR => 9;
 
-use constant PS_YES    => 1;
-use constant PS_NO   => 0;
+use constant ST_FREE    => 1;
+use constant ST_BUSY   => 0;
 use constant DR_CLOSED => 1;
 use constant DR_OPEN   => 0;
 
@@ -17,7 +17,7 @@ sub new
    bless($self, $class);
    $self->{current_floor} = 1;
    $self->{finish_floor} = 1;
-   $self->{state} = {'passenger' => PS_NO, 'doors' => DR_CLOSED};
+   $self->{state} = {'general' => ST_FREE, 'doors' => DR_CLOSED};
    return $self;
 }
 
@@ -64,11 +64,20 @@ sub set_current_floor
 sub set_finish_floor
 {
     my ($self, $f) = @_;
-    $self->{finish_floor} = $f if ($f > 0 && $f <= TOP_FLOOR);
-    if ($self->{finish_floor} == $f)
-        { return 1; }
-    else
-        { return 0; }
+    if ($self->get_state()->{'general'} == ST_FREE)
+    {
+        $self->{finish_floor} = $f if ($f > 0 && $f <= TOP_FLOOR);
+        if ($self->{finish_floor} == $f)
+        {
+            $self->set_state({'general' => ST_BUSY, 'doors' => DR_CLOSED});
+            return 1; 
+        }
+        #else
+        #{ return 0; }
+    }
+    #else
+    #    { return 0; }
+    return 0;
 }
 
 sub _move_to_finish
