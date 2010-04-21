@@ -35,27 +35,18 @@ sub new
     $self->{buttons} = [];
     
     my $cur_floor = ${$self->{elevator}}->get_current_floor();
-    
-=comment
-draws elevator at the center of the canvas
-
-    $self->{el_coords} = [int(($WIDTH/2))-(int($E_WIDTH/2)), 
-                          ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
-                          int(($WIDTH/2))+(int($E_WIDTH/2)),
-                          ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT];
-=cut
 
     $self->{el_coords} = [int($WIDTH/2), 
                       ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
                       int($WIDTH/2)+$E_WIDTH,
                       ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT];
                       
-
     $self->{main_window} = MainWindow->new('-title' => 'Elevators');
     $self->{canvas} = $self->{main_window}->Canvas('-width' => $WIDTH,
                                                   '-height' => $HEIGHT,
                                                   '-border' => 1,
                                                   '-relief' => 'ridge');
+    $self->{selection_dialog} = 0;
     $self->{canvas}->pack();
     return $self;
 }
@@ -79,7 +70,7 @@ sub draw_floors
 
         $self->{buttons}[$f] = $self->{canvas}->Button('-text' => $f,
                                     '-width' => $BTN_WIDTH,
-                                    '-command' => sub{$self->button_pressed($f)})->place('-relx' => $btn_relx,
+                                    '-command' => sub{$self->floor_button_pressed($f)})->place('-relx' => $btn_relx,
                                                                                         '-rely' => $btn_rely, 
                                                                                         '-anchor' => 'center');
 
@@ -95,7 +86,7 @@ sub draw_floors
     $self->{main_window}->Entry('-textvariable' => 'Enter floor number')->pack();
 }
 
-sub button_pressed
+sub floor_button_pressed
 {
     my ($self, $f) = @_;
     if (${$self->{elevator}}->get_state()->{'general'} == Elevator::ST_FREE &&
@@ -156,20 +147,20 @@ sub move_elevator
             
             if (${$self->{elevator}}->get_current_floor() == ${$self->{elevator}}->get_finish_floor())
             {
-# it has to be moved into a separate function 'draw_finish_dialog'
+# it has to be moved into a separate function 'draw_selection_dialog'
                 ${$self->{elevator}}->set_state({'general' => Elevator::ST_FREE, 'doors' => Elevator::DR_CLOSED});
                 $self->{buttons}[${$self->{elevator}}->get_current_floor()]->configure('-state' => 'normal');
                 
                 #my $dialog = $self->{main_window}->Toplevel('-height' => 200, '-width' => 200);
-                my $dialog = $self->{main_window}->Toplevel();
+                $self->{selection_dialog} = $self->{main_window}->Toplevel();
                 
-                $dialog->resizable( 0, 0 );
-                $dialog->transient($dialog->Parent->toplevel);
-                $dialog->protocol('WM_DELETE_WINDOW' => sub {});   
-                $dialog->grab;
+                $self->{selection_dialog}->resizable( 0, 0 );
+                $self->{selection_dialog}->transient($self->{selection_dialog}->Parent->toplevel);
+                $self->{selection_dialog}->protocol('WM_DELETE_WINDOW' => sub {});   
+                $self->{selection_dialog}->grab;
                 
                 
-                #$dialog->destroy();
+                #$self->{selection_dialog}->destroy();
 
                 my %relcoords;
                 my $stepy = 1/Elevator::TOP_FLOOR;
@@ -181,9 +172,15 @@ sub move_elevator
                     { $relcoords{'-relx'} = 0.3; $relcoords{'-rely'} -= $stepy}
                     else 
                     { $relcoords{'-relx'} = 0.6; }
-                    $dialog->Button('-text' => $i, '-width' => $BTN_WIDTH)->place(%relcoords);
+                    my $f = $i;
+                    $self->{selection_dialog}->Button('-text' => $i, 
+                                                    '-width' => $BTN_WIDTH,
+                                                    '-command' => sub{$self->selection_button_pressed($f)})->place(%relcoords);
                 }
-# end of 'draw_finish_dialog'
+                $self->{selection_dialog}->Button('-text' => 'Cancel', 
+                                                    '-command' => sub{$self->{selection_dialog}->destroy()})->place('-relx' => 0.42,
+                                                                                                                    '-rely' => 0.88);
+# end of 'draw_selection_dialog'
             }
         }
         if ($debug) { print "We at the ". ${$self->{elevator}}->get_current_floor() ." floor\n"; }
@@ -205,11 +202,24 @@ sub move_elevator
                 
             if (${$self->{elevator}}->get_current_floor() == ${$self->{elevator}}->get_finish_floor())
             { 
-                ${$self->{elevator}}->set_state({'general' => Elevator::ST_FREE, 'doors' => Elevator::DR_CLOSED});
+                ${$self->{elevator}}->set_state({'general' => Elevator::ST_FREE, 'doors' => Elevator::DR_CLOSED, 'passenger' => Elevator::PS_NO});
                 $self->{buttons}[${$self->{elevator}}->get_current_floor()]->configure('-state' => 'normal');
             }
         }
         if ($debug) { print "We at the ". ${$self->{elevator}}->get_current_floor() ." floor\n"; }
+    }
+
+}
+
+sub selection_button_pressed
+{
+    my ($self, $f) = @_;
+    if (${$self->{elevator}}->get_state()->{'general'} == Elevator::ST_FREE &&
+        ($f != ${$self->{elevator}}->get_current_floor()))
+    {
+        print "Setting $f floor\n";
+        ${$self->{elevator}}->set_finish_floor($f);
+        $self->{selection_dialog}->destroy();
     }
 
 }

@@ -9,6 +9,8 @@ use constant ST_FREE    => 1;
 use constant ST_BUSY   => 0;
 use constant DR_CLOSED => 1;
 use constant DR_OPEN   => 0;
+use constant PS_YES => 1;
+use constant PS_NO   => 0;
 
 sub new
 {
@@ -17,7 +19,7 @@ sub new
    bless($self, $class);
    $self->{current_floor} = 1;
    $self->{finish_floor} = 1;
-   $self->{state} = {'general' => ST_FREE, 'doors' => DR_CLOSED};
+   $self->{state} = {'general' => ST_FREE, 'doors' => DR_CLOSED, 'passenger' => PS_NO};
    return $self;
 }
 
@@ -69,7 +71,7 @@ sub set_finish_floor
         $self->{finish_floor} = $f if ($f > 0 && $f <= TOP_FLOOR);
         if ($self->{finish_floor} == $f)
         {
-            $self->set_state({'general' => ST_BUSY, 'doors' => DR_CLOSED});
+            $self->set_state({'general' => ST_BUSY, 'doors' => DR_CLOSED, 'passenger' => PS_NO});
             return 1; 
         }
         #else
