@@ -76,27 +76,13 @@ sub draw_floors
         $self->{canvas}->createLine($F_INDENT, $i*$F_HEIGHT, $WIDTH, $i*$F_HEIGHT,
                                     '-fill' => 'black',
                                     '-tags' => 'floor');
-        #if (scalar @{$self->{buttons}} < Elevator::TOP_FLOOR)
-        #{
-            #print "Drawing buttons.\n";
-=comment            
-            $self->{buttons}[$f] = $self->{canvas}->Button('-text' => $f,
-                                        '-width' => $BTN_WIDTH,
-                                        '-command' => sub{${$self->{elevator}}->set_finish_floor($f)})->place('-relx' => $btn_relx,
-                                                                    '-rely' => $btn_rely, 
-                                                                    '-anchor' => 'center');
-=cut                                                                    
-            $self->{buttons}[$f] = $self->{canvas}->Button('-text' => $f,
-                                        '-width' => $BTN_WIDTH,
-                                        '-command' => sub{$self->button_pressed($f)})->place('-relx' => $btn_relx,
-                                                                    '-rely' => $btn_rely, 
-                                                                    '-anchor' => 'center');
-        #}
-        #else
-        #{
-        #    print "Redrawing buttons.\n";
-        #    $self->redraw_buttons();
-        #}
+
+        $self->{buttons}[$f] = $self->{canvas}->Button('-text' => $f,
+                                    '-width' => $BTN_WIDTH,
+                                    '-command' => sub{$self->button_pressed($f)})->place('-relx' => $btn_relx,
+                                                                                        '-rely' => $btn_rely, 
+                                                                                        '-anchor' => 'center');
+
         $btn_rely += 0.066;
     }
     #print $self->{buttons}[1]->cget('-text');
@@ -112,7 +98,6 @@ sub draw_floors
 sub button_pressed
 {
     my ($self, $f) = @_;
-    print "floor $f, ref $self->{buttons}[$f]\n";
     if (${$self->{elevator}}->get_state()->{'general'} == Elevator::ST_FREE &&
         ($f != ${$self->{elevator}}->get_current_floor()))
     {
@@ -170,20 +155,35 @@ sub move_elevator
                 { ${$self->{elevator}}->set_current_floor(${$self->{elevator}}->get_current_floor() + 1); }
             
             if (${$self->{elevator}}->get_current_floor() == ${$self->{elevator}}->get_finish_floor())
-            { 
+            {
+# it has to be moved into a separate function 'draw_finish_dialog'
                 ${$self->{elevator}}->set_state({'general' => Elevator::ST_FREE, 'doors' => Elevator::DR_CLOSED});
                 $self->{buttons}[${$self->{elevator}}->get_current_floor()]->configure('-state' => 'normal');
                 
                 #my $dialog = $self->{main_window}->Toplevel('-height' => 200, '-width' => 200);
+                my $dialog = $self->{main_window}->Toplevel();
                 
-                #$dialog->resizable( 0, 0 );
-                #$dialog->transient($dialog->Parent->toplevel);
-                #$dialog->protocol('WM_DELETE_WINDOW' => sub {});   
-                #$dialog->grab;
+                $dialog->resizable( 0, 0 );
+                $dialog->transient($dialog->Parent->toplevel);
+                $dialog->protocol('WM_DELETE_WINDOW' => sub {});   
+                $dialog->grab;
                 
                 
-                #$dialog->Button('-text' => 'floor')->pack();
-                #$dialog->pack();
+                #$dialog->destroy();
+
+                my %relcoords;
+                my $stepy = 1/Elevator::TOP_FLOOR;
+                $stepy += $stepy/2;
+                $relcoords{'-rely'} = 1 - $stepy;
+                for (my $i = 1; $i <= Elevator::TOP_FLOOR; $i++)
+                {
+                    if ($i % 2) 
+                    { $relcoords{'-relx'} = 0.3; $relcoords{'-rely'} -= $stepy}
+                    else 
+                    { $relcoords{'-relx'} = 0.6; }
+                    $dialog->Button('-text' => $i, '-width' => $BTN_WIDTH)->place(%relcoords);
+                }
+# end of 'draw_finish_dialog'
             }
         }
         if ($debug) { print "We at the ". ${$self->{elevator}}->get_current_floor() ." floor\n"; }

@@ -3,7 +3,7 @@ package Elevator;
 use warnings;
 use strict;
 
-use constant TOP_FLOOR => 9;
+use constant TOP_FLOOR => 11;
 
 use constant ST_FREE    => 1;
 use constant ST_BUSY   => 0;
