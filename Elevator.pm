@@ -5,12 +5,12 @@ use strict;
 
 use constant TOP_FLOOR => 11;
 
-use constant ST_FREE    => 1;
+use constant ST_FREE   => 1;
 use constant ST_BUSY   => 0;
 use constant DR_CLOSED => 1;
 use constant DR_OPEN   => 0;
-use constant PS_YES => 1;
-use constant PS_NO   => 0;
+use constant PS_YES    => 1;
+use constant PS_NO     => 0;
 
 sub new
 {
