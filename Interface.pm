@@ -88,17 +88,6 @@ sub draw_floors
     $self->{main_window}->Entry('-textvariable' => 'Enter floor number')->pack();
 }
 
-sub floor_button_pressed
-{
-    my ($self, $f) = @_;
-    if (${$self->{elevator}}->get_state()->{'general'} == Elevator::ST_FREE &&
-        ($f != ${$self->{elevator}}->get_current_floor()))
-    {
-        $self->{buttons}[$f]->configure('-state' => 'disabled');
-        ${$self->{elevator}}->set_finish_floor($f);
-    }
-}
-
 sub draw_elevator
 {
     if (@_ != 2)
@@ -158,7 +147,7 @@ sub draw_selection_dialog
                                         '-command' => sub{$self->selection_button_pressed($f)})->place(%relcoords);
     }
     $self->{selection_dialog}->Button('-text' => 'Cancel', 
-                                        '-command' => sub{$self->{selection_dialog}->destroy(); $self->{selection_dialog} = 0})->place('-relx' => 0.42,
+                                        '-command' => sub{$self->close_doors()})->place('-relx' => 0.42,
                                                                                                         '-rely' => 0.88);
 }
 
@@ -217,6 +206,22 @@ sub move_elevator
 
 }
 
+sub floor_button_pressed
+{
+    my ($self, $f) = @_;
+    if (${$self->{elevator}}->get_state()->{'general'} == Elevator::ST_FREE &&
+        ($f != ${$self->{elevator}}->get_current_floor()))
+    {
+        $self->{buttons}[$f]->configure('-state' => 'disabled');
+        ${$self->{elevator}}->set_finish_floor($f);
+    }
+    elsif (${$self->{elevator}}->get_state()->{'general'} == Elevator::ST_FREE &&
+        ($f == ${$self->{elevator}}->get_current_floor()))
+    {
+        $self->draw_selection_dialog();
+    }
+}
+
 sub selection_button_pressed
 {
     my ($self, $f) = @_;
@@ -224,11 +229,19 @@ sub selection_button_pressed
         ($f != ${$self->{elevator}}->get_current_floor()))
     {
         ${$self->{elevator}}->set_finish_floor($f);
-        $self->{selection_dialog}->destroy();
-        $self->{selection_dialog} = 0;
+        $self->close_doors();
         $close_doors_timer = 0;
     }
+}
 
+sub close_doors
+{
+    my $self = shift;
+    $self->{selection_dialog}->destroy();
+    $self->{selection_dialog} = 0;
+    ${$self->{elevator}}->set_state({'general' => ${$self->{elevator}}->get_state()->{'general'},
+        'doors' => Elevator::DR_CLOSED,
+        'passenger' => ${$self->{elevator}}->get_state()->{'passenger'}});
 }
 
 sub tick
@@ -236,10 +249,10 @@ sub tick
     my $self = shift;
     
     print "close_doors_time $close_doors_timer\n";
+    
     if ($self->{selection_dialog} && ($close_doors_timer > $close_doors_interval))
     {
-        $self->{selection_dialog}->destroy();
-        $self->{selection_dialog} = 0;
+        $self->close_doors();
         $close_doors_timer = 0;
     }
     elsif ($self->{selection_dialog})
