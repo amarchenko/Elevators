@@ -19,8 +19,8 @@ our $T_INDENT = 10;
 
 our $BTN_WIDTH = 3; # button width is in TEXT CHARACTERS
 
-our $interval = 400;
-our $pace = 10;
+our $interval = 300;
+our $pace = 5;
 our $close_doors_interval = 5000;
 our $close_doors_timer = 0;
 
@@ -85,7 +85,7 @@ sub draw_floors
     #print $b->cget('-text');
      
     #$self->{canvas}->Button('-text' => 'Call here', '-command' => sub{})->place('-relx' => 0.17, '-rely' => 0.048+0.065, '-anchor' => 'center');
-    $self->{main_window}->Entry('-textvariable' => 'Enter floor number')->pack();
+    #$self->{main_window}->Entry('-textvariable' => 'Enter floor number')->pack();
 }
 
 sub draw_elevator
@@ -95,11 +95,11 @@ sub draw_elevator
     my ($self, $st) = @_;
     my $color;
     
-    if ($st->{doors})
+    if (${$self->{elevator}}->get_state()->{'doors'})
     {
         $color = '#7A7A7A';
     }
-    elsif (!$st->{doors})
+    elsif (!${$self->{elevator}}->get_state()->{'doors'})
     {
         $color = '#FFD700';
     }
@@ -110,8 +110,14 @@ sub draw_elevator
                                         '-fill' => $color,
                                         '-outline' => '#000000',
                                         '-tags' => 'elevator');
-    #$self->{canvas}->createLine(int($WIDTH/2)+int($E_WIDTH/2),
-    #                                sdf
+                                        
+    my $cur_floor = ${$self->{elevator}}->get_current_floor();                                                
+    $self->{canvas}->createLine(int($WIDTH/2)+int($E_WIDTH/2),
+                                ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
+                                int($WIDTH/2)+int($E_WIDTH/2),
+                                ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT,
+                                '-fill' => '#000000',
+                                '-tags' => 'elevator');
     $self->draw_floors();
 }
 
@@ -232,7 +238,6 @@ sub selection_button_pressed
     {
         ${$self->{elevator}}->set_finish_floor($f);
         $self->close_doors();
-        $close_doors_timer = 0;
     }
 }
 
@@ -241,6 +246,7 @@ sub close_doors
     my $self = shift;
     $self->{selection_dialog}->destroy();
     $self->{selection_dialog} = 0;
+    $close_doors_timer = 0;
     ${$self->{elevator}}->set_state({'general' => ${$self->{elevator}}->get_state()->{'general'},
         'doors' => Elevator::DR_CLOSED,
         'passenger' => ${$self->{elevator}}->get_state()->{'passenger'}});
@@ -255,13 +261,13 @@ sub tick
     if ($self->{selection_dialog} && ($close_doors_timer > $close_doors_interval))
     {
         $self->close_doors();
-        $close_doors_timer = 0;
     }
     elsif ($self->{selection_dialog})
     {
         $close_doors_timer += $interval;
     }
     
+    #$self->draw_elevator(${$self->{elevator}}->get_state());
     $self->move_elevator();
     $self->{main_window}->after($interval, sub{$self->tick()});
 }
