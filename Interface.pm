@@ -110,6 +110,8 @@ sub draw_elevator
                                         '-fill' => $color,
                                         '-outline' => '#000000',
                                         '-tags' => 'elevator');
+    #$self->{canvas}->createLine(int($WIDTH/2)+int($E_WIDTH/2),
+    #                                sdf
     $self->draw_floors();
 }
 
