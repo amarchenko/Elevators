@@ -118,7 +118,8 @@ sub draw_elevator
                                 ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT,
                                 '-fill' => '#000000',
                                 '-tags' => 'elevator');
-    $self->draw_floors();
+    #$self->draw_floors();
+    $self->{canvas}->raise('floor');
 }
 
 sub draw_selection_dialog
@@ -127,6 +128,8 @@ sub draw_selection_dialog
     
     ${$self->{elevator}}->set_state({'general' => Elevator::ST_FREE, 'doors' => Elevator::DR_OPEN, 'passenger' => Elevator::PS_NO});
     $self->{buttons}[${$self->{elevator}}->get_current_floor()]->configure('-state' => 'normal');
+    
+    #$self->draw_elevator(${$self->{elevator}}->get_state());
     
     #my $dialog = $self->{main_window}->Toplevel('-height' => 200, '-width' => 200);
     $self->{selection_dialog} = $self->{main_window}->Toplevel();

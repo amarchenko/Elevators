@@ -14,7 +14,7 @@ $face = Interface->new(\$el);
 #$el->set_state({'passenger' => Elevator::PS_OUT, 'doors' => Elevator::DR_OPEN});
 
 
-#$face->draw_floors();
+$face->draw_floors();
 $face->draw_elevator($el->get_state());
 
 $face->tick();
