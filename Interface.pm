@@ -26,6 +26,11 @@ our $close_doors_timer = 0;
 
 our $debug = 0;
 
+######################
+# TO BE REMOVED
+our $glob_rect;
+######################
+
 sub new
 {
     if (@_ != 2)
@@ -94,7 +99,7 @@ sub draw_elevator
         { croak "Wrong number argument of for ". __PACKAGE__ ."\n"; }
     my ($self, $st) = @_;
     my $color;
-    
+        
     if (${$self->{elevator}}->get_state()->{'doors'})
     {
         $color = '#7A7A7A';
@@ -103,23 +108,51 @@ sub draw_elevator
     {
         $color = '#FFD700';
     }
-    $self->{canvas}->createRectangle($self->{el_coords}[0], 
-                                        $self->{el_coords}[1], 
-                                        $self->{el_coords}[2],
-                                        $self->{el_coords}[3], 
-                                        '-fill' => $color,
-                                        '-outline' => '#000000',
-                                        '-tags' => 'elevator');
-                                        
-    my $cur_floor = ${$self->{elevator}}->get_current_floor();                                                
-    $self->{canvas}->createLine(int($WIDTH/2)+int($E_WIDTH/2),
-                                ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
-                                int($WIDTH/2)+int($E_WIDTH/2),
-                                ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT,
-                                '-fill' => '#000000',
-                                '-tags' => 'elevator');
+    
+    if (!$self->{canvas}->gettags('elevator'))
+    {
+        $glob_rect = $self->{canvas}->createRectangle($self->{el_coords}[0], 
+                                            $self->{el_coords}[1], 
+                                            $self->{el_coords}[2],
+                                            $self->{el_coords}[3], 
+                                            '-fill' => $color,
+                                            '-outline' => '#000000',
+                                            '-tags' => 'elevator');
+                                            
+        my $cur_floor = ${$self->{elevator}}->get_current_floor();      
+        
+        $self->{canvas}->createLine(int($WIDTH/2)+int($E_WIDTH/2),
+                                    ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
+                                    int($WIDTH/2)+int($E_WIDTH/2),
+                                    ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT,
+                                    '-fill' => '#000000',
+                                    '-tags' => 'door1');
+        $self->{canvas}->createLine(int($WIDTH/2)+int($E_WIDTH/2),
+                                    ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT-$E_HEIGHT,
+                                    int($WIDTH/2)+int($E_WIDTH/2),
+                                    ((Elevator::TOP_FLOOR+1)-$cur_floor)*$F_HEIGHT,
+                                    '-fill' => '#000000',
+                                    '-tags' => 'door2');
+    }
+    else
+    {
+        $self->{canvas}->itemconfigure('elevator', '-fill' => $color);
+        #print "glob_rect - $glob_rect\n";
+        if (!${$self->{elevator}}->get_state()->{'doors'})
+        {
+            $self->open_doors();
+        }
+    }
+                                
     #$self->draw_floors();
     $self->{canvas}->raise('floor');
+}
+
+sub open_doors
+{
+    my $self = shift;
+    $self->{canvas}->move('door1', -1, 0);
+    $self->{canvas}->move('door2', 1, 0);
 }
 
 sub draw_selection_dialog
@@ -176,6 +209,8 @@ sub move_elevator
         if($self->{el_coords}[3] > ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_finish_floor())*$F_HEIGHT)
         {
             $self->{canvas}->move('elevator', 0, -$pace);
+            $self->{canvas}->move('door1', 0, -$pace);
+            $self->{canvas}->move('door2', 0, -$pace);
             $self->{el_coords}[1] -= $pace;
             $self->{el_coords}[3] -= $pace;
             
@@ -198,6 +233,8 @@ sub move_elevator
         if($self->{el_coords}[3] < ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_finish_floor())*$F_HEIGHT)
         {
             $self->{canvas}->move('elevator', 0, $pace);
+            $self->{canvas}->move('door1', 0, $pace);
+            $self->{canvas}->move('door2', 0, $pace);
             $self->{el_coords}[1] += $pace;
             $self->{el_coords}[3] += $pace;
             
@@ -261,6 +298,9 @@ sub tick
     
     print "close_doors_time $close_doors_timer\n";
     
+    #print $self->{canvas}->gettags('elevator1')." -\n";
+    
+    $self->draw_elevator(${$self->{elevator}}->get_state());
     if ($self->{selection_dialog} && ($close_doors_timer > $close_doors_interval))
     {
         $self->close_doors();
@@ -269,8 +309,6 @@ sub tick
     {
         $close_doors_timer += $interval;
     }
-    
-    #$self->draw_elevator(${$self->{elevator}}->get_state());
     $self->move_elevator();
     $self->{main_window}->after($interval, sub{$self->tick()});
 }
