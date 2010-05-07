@@ -11,6 +11,7 @@ use constant DR_CLOSED => 1;
 use constant DR_OPEN   => 0;
 use constant PS_YES    => 1;
 use constant PS_NO     => 0;
+use constant EL_BASE_SPEED => 0.125;
 
 sub new
 {
@@ -20,7 +21,14 @@ sub new
    $self->{current_floor} = 1;
    $self->{finish_floor} = 1;
    $self->{state} = {'general' => ST_FREE, 'doors' => DR_CLOSED, 'passenger' => PS_NO};
+   $self->{speed} = EL_BASE_SPEED;
    return $self;
+}
+
+sub get_speed
+{
+    my $self = shift;
+    return $self->{speed};
 }
 
 sub get_state
@@ -66,8 +74,8 @@ sub set_current_floor
 sub set_finish_floor
 {
     my ($self, $f) = @_;
-    if ($self->get_state()->{'general'} == ST_FREE)
-    {
+    #if ($self->get_state()->{'general'} == ST_FREE)
+    #{
         $self->{finish_floor} = $f if ($f > 0 && $f <= TOP_FLOOR);
         if ($self->{finish_floor} == $f)
         {
@@ -76,7 +84,7 @@ sub set_finish_floor
         }
         #else
         #{ return 0; }
-    }
+    #}
     #else
     #    { return 0; }
     return 0;
