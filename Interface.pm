@@ -28,9 +28,9 @@ our $prev_time = 0;
 our $cur_time = 0;
 our $delta = 0;
 
-our $pace = 5;
+our $pace = 2;
 
-our $debug = 1;
+our $debug = 0;
 
 ######################
 # TO BE REMOVED
@@ -217,24 +217,35 @@ sub move_elevator
     #my $fl = shift;
     #print "Moving to $fl\n";
     
-    my $distance = ${$self->{elevator}}->get_speed() * $delta;
+    my $distance = int(${$self->{elevator}}->get_speed() * $delta/$pace)*$pace;
+    if ($debug)
+    {   
+        print "Elevator distance: $distance\n";
+        print "CUR COORD ".((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_finish_floor()+1)*$F_HEIGHT."\n";
+    }       
+        
     
     # moving up
     if (${$self->{elevator}}->get_current_floor() < ${$self->{elevator}}->get_finish_floor())
-    {      
+    {
         if($self->{el_coords}[3] > ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_finish_floor())*$F_HEIGHT)
         {
+            if ($self->{el_coords}[3] - $distance < ((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_finish_floor()+1)*$F_HEIGHT)
+                {$distance = ((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_finish_floor()+1)*$F_HEIGHT - $self->{el_coords}[3]}
+                
             $self->{canvas}->move('elevator', 0, -$distance);
             $self->{canvas}->move('door1', 0, -$distance);
             $self->{canvas}->move('door2', 0, -$distance);
-            $self->{el_coords}[1] = int($self->{el_coords}[1] - $distance);
-            $self->{el_coords}[3] = int ($self->{el_coords}[3] - $distance);
+            $self->{el_coords}[1] -= $distance;
+            $self->{el_coords}[3] -= $distance;
             
             if ($debug) { print "Comparing ". $self->{el_coords}[3] .
-                " vs ". ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_current_floor()-1)*$F_HEIGHT ."\n"; }
-
-            if ($self->{el_coords}[3] <= ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_current_floor()-1)*$F_HEIGHT)
+                " vs ". ((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_current_floor())*$F_HEIGHT ."\n"; }         
+            
+            if ($self->{el_coords}[3] <= ((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_current_floor())*$F_HEIGHT)
                 { ${$self->{elevator}}->set_current_floor(${$self->{elevator}}->get_current_floor() + 1); }
+                
+                
             
             if (${$self->{elevator}}->get_current_floor() == ${$self->{elevator}}->get_finish_floor())
             {
@@ -246,14 +257,17 @@ sub move_elevator
     }
     # moving down
     elsif (${$self->{elevator}}->get_current_floor() > ${$self->{elevator}}->get_finish_floor())
-    {      
+    {
         if($self->{el_coords}[3] < ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_finish_floor())*$F_HEIGHT)
         {
+            if ($self->{el_coords}[3] + $distance > ((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_finish_floor()+1)*$F_HEIGHT)
+                {$distance = ((Elevator::TOP_FLOOR)-${$self->{elevator}}->get_finish_floor()+1)*$F_HEIGHT - $self->{el_coords}[3]}
+                
             $self->{canvas}->move('elevator', 0, $distance);
             $self->{canvas}->move('door1', 0, $distance);
             $self->{canvas}->move('door2', 0, $distance);
-            $self->{el_coords}[1] = int($self->{el_coords}[1] + $distance);
-            $self->{el_coords}[3] = int ($self->{el_coords}[3] + $distance);
+            $self->{el_coords}[1] += $distance;
+            $self->{el_coords}[3] += $distance;
             
             if ($debug) { print "Comparing ". $self->{el_coords}[3] .
                 " vs ". ((Elevator::TOP_FLOOR+1)-${$self->{elevator}}->get_current_floor()+1)*$F_HEIGHT ."\n"; }
@@ -338,7 +352,8 @@ sub tick
     {
         $close_doors_timer += $interval;
     }
-    $self->move_elevator($delta);
+    if (${$self->{elevator}}->get_current_floor() != ${$self->{elevator}}->get_finish_floor())
+        { $self->move_elevator($delta); }
     $self->{main_window}->after($interval, sub{$self->tick()});
 }
 
